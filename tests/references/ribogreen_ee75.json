@@ -1,0 +1,8 @@
+{
+  "description": "Blank-corrected linear cal slope 1000; free 1 ug/mL, total 4 ug/mL -> EE 75%",
+  "expected": {
+    "ee_percent": 75.0,
+    "free_rna_ug_per_mL": 1.0,
+    "total_rna_ug_per_mL": 4.0
+  }
+}

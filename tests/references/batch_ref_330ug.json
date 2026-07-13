@@ -1,0 +1,17 @@
+{
+  "description": "Hand-worked batch: 330 ug RNA, avg_nt_mw=330, N/P=6, 50/50 ionizable/helper",
+  "inputs": {
+    "rna_mass_ug": 330.0,
+    "avg_nt_mw": 330.0,
+    "target_np": 6.0,
+    "ionizable_mol_percent": 50.0,
+    "expected_recovery": 1.0,
+    "overage_fraction": 0.0
+  },
+  "expected": {
+    "phosphate_nmol": 1000.0,
+    "ionizable_nmol": 6000.0,
+    "total_lipid_nmol": 12000.0,
+    "achieved_np": 6.0
+  }
+}

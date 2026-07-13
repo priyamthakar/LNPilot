@@ -1,0 +1,32 @@
+{
+  "batch_id": "demo-batch-001",
+  "rna_mass": "100 ug",
+  "target_np": 6,
+  "expected_recovery": 0.8,
+  "overage_fraction": 0.1,
+  "frr": "3:1 aqueous:organic",
+  "total_flow_rate": "12 mL/min",
+  "lipid_composition": {
+    "ionizable": {
+      "mol_percent": 50.0,
+      "mw": "710 g/mol",
+      "stock": "10 mg/mL",
+      "ionizable_groups": 1.0
+    },
+    "helper": {
+      "mol_percent": 10.0,
+      "mw": "790 g/mol",
+      "stock": "10 mg/mL"
+    },
+    "cholesterol": {
+      "mol_percent": 38.5,
+      "mw": "386.65 g/mol",
+      "stock": "10 mg/mL"
+    },
+    "peg_lipid": {
+      "mol_percent": 1.5,
+      "mw": "2500 g/mol",
+      "stock": "5 mg/mL"
+    }
+  }
+}
