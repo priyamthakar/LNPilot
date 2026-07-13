@@ -41,7 +41,8 @@ dev = [
 lnpilot = "lnpilot.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/lnpilot/lnpilot"
+Homepage = "https://github.com/priyamthakar/LNPilot"
+Repository = "https://github.com/priyamthakar/LNPilot"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/lnpilot"]
