@@ -85,18 +85,54 @@ def render_assay_md(assay: dict[str, Any]) -> str:
         "",
     ]
     cal = a.get("calibration") or {}
-    for k in ("model", "slope", "intercept", "r_squared", "n_points", "x_min", "x_max", "weighted"):
+    for k in (
+        "model",
+        "slope",
+        "intercept",
+        "r_squared",
+        "n_points",
+        "lloq",
+        "uloq",
+        "residual_standard_error",
+        "weighted",
+    ):
         if k in cal:
             lines.append(f"- **{k}**: {cal[k]}")
-    lines += ["", "## Samples", "",
-              "| Key | Free (µg/mL) | Total (µg/mL) | Encap (µg/mL) | EE% |",
-              "|---|---:|---:|---:|---:|"]
+    standard_summary = cal.get("standard_summary") or []
+    if standard_summary:
+        lines += [
+            "",
+            "### Standard diagnostics",
+            "",
+            "| Nominal (ug/mL) | Back-calculated (ug/mL) | SD | CV% | Bias% | n |",
+            "|---:|---:|---:|---:|---:|---:|",
+        ]
+        for standard in standard_summary:
+            lines.append(
+                f"| {standard.get('nominal_concentration_ug_per_mL')} | "
+                f"{standard.get('back_calculated_mean_ug_per_mL')} | "
+                f"{standard.get('back_calculated_sd')} | "
+                f"{standard.get('back_calculated_cv_percent')} | "
+                f"{standard.get('bias_percent')} | {standard.get('replicate_count')} |"
+            )
+    lines += [
+        "",
+        "## Samples",
+        "",
+        "| Key | Free (ug/mL) | Total (ug/mL) | Encap (ug/mL) | EE% | 95% CI | Recovery% |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
     for s in a.get("sample_table") or []:
         ee = s.get("ee_percent")
         ee_s = f"{ee:.2f}" if ee is not None else "—"
+        ci = s.get("ee_confidence_interval_95")
+        ci_s = "—" if ci is None else f"{100 * ci[0]:.2f} to {100 * ci[1]:.2f}"
+        recovery = s.get("recovery_percent")
+        recovery_s = "—" if recovery is None else f"{recovery:.2f}"
         lines.append(
             f"| {s.get('sample_key')} | {s.get('free_rna_ug_per_mL')} | "
-            f"{s.get('total_rna_ug_per_mL')} | {s.get('encapsulated_rna_ug_per_mL')} | {ee_s} |"
+            f"{s.get('total_rna_ug_per_mL')} | {s.get('encapsulated_rna_ug_per_mL')} | "
+            f"{ee_s} | {ci_s} | {recovery_s} |"
         )
     lines += ["", "## QC", ""]
     qc = a.get("qc") or {}

@@ -91,6 +91,7 @@ def plan_batch(
     path_volume: Any = None,
     aqueous_rna_concentration: Any = None,
     operator: str | None = None,
+    instrument_metadata: dict[str, Any] | None = None,
 ) -> BatchPlan:
     """Plan an mRNA–LNP batch: N/P, lipids, stocks, mixing, mass balance.
 
@@ -199,23 +200,28 @@ def plan_batch(
     # Organic volume from lipid stocks if available
     org_stock_vols = [s["stock_volume_mL"] for s in stocks if s.get("stock_volume_mL") is not None]
     organic_vol = sum(org_stock_vols) if org_stock_vols else None
+    phases: dict[str, float | None] = {}
     if organic_vol is not None and organic_vol > 0:
-        phases = phase_volumes_for_batch(
-            organic_vol * (frr_info["aqueous_to_organic"] + 1.0),
-            frr_info["aqueous_to_organic"],
+        phases.update(
+            phase_volumes_for_batch(
+                organic_vol * (frr_info["aqueous_to_organic"] + 1.0),
+                frr_info["aqueous_to_organic"],
+            )
         )
         # reconcile: organic should match stock sum
         phases["organic_volume_mL"] = organic_vol
         phases["aqueous_volume_mL"] = organic_vol * frr_info["aqueous_to_organic"]
-        phases["total_mixed_volume_mL"] = (
-            phases["aqueous_volume_mL"] + phases["organic_volume_mL"]
+        phases["total_mixed_volume_mL"] = organic_vol * (
+            frr_info["aqueous_to_organic"] + 1.0
         )
     else:
-        phases = {
-            "total_mixed_volume_mL": None,
-            "aqueous_volume_mL": None,
-            "organic_volume_mL": None,
-        }
+        phases.update(
+            {
+                "total_mixed_volume_mL": None,
+                "aqueous_volume_mL": None,
+                "organic_volume_mL": None,
+            }
+        )
         warnings.append("Organic phase volume unknown without complete stock volumes.")
 
     # Aqueous RNA concentration at mix
@@ -246,8 +252,11 @@ def plan_batch(
     fill_mL = None
     if fill_volume is not None:
         fill_mL = to_canonical(fill_volume, "volume", default_unit="mL")
+        require_positive("fill_volume", fill_mL)
     n_v = n_vials
     if n_v is not None:
+        if isinstance(n_v, bool) or not isinstance(n_v, int):
+            raise ValidationError("n_vials must be a positive integer")
         require_positive("n_vials", float(n_v))
 
     path_v = None
@@ -264,7 +273,8 @@ def plan_batch(
         assumptions=assumptions,
         warnings=warnings,
         operator=operator,
-        method_id="formulate.plan_batch.v0.1",
+        method_id="formulate.plan_batch.v0.1.1",
+        instrument_metadata=dict(instrument_metadata or {}),
     )
 
     return BatchPlan(
@@ -273,7 +283,7 @@ def plan_batch(
             "target_np": float(target_np),
             "target_rna_mass_ug": target_rna_ug,
             "planned_rna_mass_ug": planned_rna_ug,
-            "expected_recovery": float(expected_recovery),
+            "expected_recovery": scale["expected_recovery"],
             "overage_fraction": float(overage_fraction),
             "process_scale_factor": scale["process_scale_factor"],
             "fill_volume_mL": fill_mL,

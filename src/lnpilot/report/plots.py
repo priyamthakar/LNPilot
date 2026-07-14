@@ -20,16 +20,26 @@ def plot_calibration(calibration: dict[str, Any], path: str | Path) -> Path:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
 
-    fig, ax = plt.subplots(figsize=(5, 4))
-    ax.scatter(xs, ys, label="standards")
+    residuals = calibration.get("residuals") or []
+    fig, (ax, residual_ax) = plt.subplots(
+        2,
+        1,
+        figsize=(6, 6),
+        gridspec_kw={"height_ratios": [2, 1]},
+        sharex=True,
+    )
+    ax.scatter(xs, ys, label="standard-level means")
     if xs:
         xline = [min(xs), max(xs)]
         yline = [slope * x + intercept for x in xline]
         ax.plot(xline, yline, label=f"fit R²={calibration.get('r_squared', 0):.4f}")
-    ax.set_xlabel("Concentration")
     ax.set_ylabel("Blank-corrected signal")
     ax.legend()
     ax.set_title("RiboGreen calibration")
+    residual_ax.axhline(0, color="black", linewidth=0.8)
+    residual_ax.scatter(xs, residuals, color="tab:red")
+    residual_ax.set_xlabel("Concentration (ug/mL)")
+    residual_ax.set_ylabel("Residual")
     fig.tight_layout()
     fig.savefig(p, dpi=120)
     plt.close(fig)

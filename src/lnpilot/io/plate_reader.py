@@ -66,20 +66,22 @@ def _load_csv(path: Path) -> dict[str, float]:
             return out
 
     # matrix format: col0 = row letter, rest = columns
-    out = {}
+    matrix_out: dict[str, float] = {}
     col_ids = header[1:]
-    for row in rows[1:]:
-        if not row:
+    for matrix_row in rows[1:]:
+        if not matrix_row:
             continue
-        row_id = row[0].strip().upper()
+        row_id = matrix_row[0].strip().upper()
         for j, col in enumerate(col_ids):
-            if j + 1 >= len(row) or row[j + 1].strip() == "":
+            if j + 1 >= len(matrix_row) or matrix_row[j + 1].strip() == "":
                 continue
             well = f"{row_id}{str(col).strip()}"
-            out[well] = require_finite(f"signal[{well}]", float(row[j + 1]))
-    if not out:
+            matrix_out[well] = require_finite(
+                f"signal[{well}]", float(matrix_row[j + 1])
+            )
+    if not matrix_out:
         raise ValidationError("No signals parsed from plate matrix")
-    return out
+    return matrix_out
 
 
 def _load_xlsx(path: Path) -> dict[str, float]:

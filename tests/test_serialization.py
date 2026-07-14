@@ -17,6 +17,8 @@ def test_batch_json_roundtrip_fields():
     s = json.dumps(plan.to_dict())
     back = json.loads(s)
     assert back["target"]["target_np"] == 4
+    assert back["schema_version"] == "1.0.0"
+    assert back["record_type"] == "batch_plan"
 
 
 def test_assay_json():
@@ -24,4 +26,7 @@ def test_assay_json():
         data="examples/plate_reader_example.csv",
         plate_map="examples/plate_map_example.csv",
     )
-    json.dumps(assay.to_dict())
+    data = assay.to_dict()
+    json.dumps(data)
+    assert data["schema_version"] == "1.0.0"
+    assert data["record_type"] == "assay_run"

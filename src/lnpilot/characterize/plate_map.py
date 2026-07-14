@@ -6,7 +6,8 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from lnpilot.core.exceptions import PlateMapError
+from lnpilot.core.exceptions import PlateMapError, UnitError
+from lnpilot.core.units import to_canonical
 from lnpilot.core.validation import require_unique
 
 # well, role, group_id, concentration, concentration_unit, dilution_factor, sample_id
@@ -66,7 +67,9 @@ def load_plate_map(path: str | Path | list[dict[str, Any]]) -> list[dict[str, An
                 f"Well {well}: unknown role {role!r}. "
                 f"Allowed: {sorted(allowed_roles)}"
             )
-        conc = r.get("concentration") or r.get("conc")
+        conc = r.get("concentration")
+        if conc in (None, ""):
+            conc = r.get("conc")
         dil = r.get("dilution_factor") or r.get("dilution") or "1"
         try:
             dil_f = float(dil) if dil != "" else 1.0
@@ -76,11 +79,19 @@ def load_plate_map(path: str | Path | list[dict[str, Any]]) -> list[dict[str, An
             raise PlateMapError(f"Well {well}: dilution_factor must be > 0")
 
         conc_f = None
+        entered_conc = None
+        entered_unit = str(r.get("concentration_unit") or "ug/mL").strip()
         if conc not in (None, ""):
             try:
-                conc_f = float(conc)
-            except ValueError as exc:
+                entered_conc = float(str(conc))
+                conc_f = to_canonical(
+                    f"{entered_conc} {entered_unit}",
+                    "concentration_mass_ug",
+                )
+            except (TypeError, ValueError, UnitError) as exc:
                 raise PlateMapError(f"Well {well}: bad concentration {conc!r}") from exc
+            if conc_f < 0:
+                raise PlateMapError(f"Well {well}: concentration must be >= 0")
 
         out.append(
             {
@@ -89,7 +100,9 @@ def load_plate_map(path: str | Path | list[dict[str, Any]]) -> list[dict[str, An
                 "group_id": str(r.get("group_id") or r.get("group") or "").strip() or None,
                 "sample_id": str(r.get("sample_id") or r.get("sample") or "").strip() or None,
                 "concentration": conc_f,
-                "concentration_unit": str(r.get("concentration_unit") or "ug/mL").strip(),
+                "concentration_unit": "ug/mL",
+                "entered_concentration": entered_conc,
+                "entered_concentration_unit": entered_unit,
                 "dilution_factor": dil_f,
                 "batch_id": str(r.get("batch_id") or "").strip() or None,
             }

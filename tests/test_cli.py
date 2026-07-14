@@ -24,11 +24,13 @@ def test_cli_analyze_ribogreen(tmp_path: Path):
             "examples/plate_map_example.csv",
             "--out",
             str(out),
+            "--plot",
         ]
     )
     assert rc == 0
     assert (out / "assay-run.json").exists()
     assert (out / "samples.csv").exists()
+    assert (out / "calibration.png").exists()
 
 
 def test_cli_render_report(tmp_path: Path):

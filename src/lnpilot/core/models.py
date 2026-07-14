@@ -7,6 +7,8 @@ from typing import Any
 
 from lnpilot.core.provenance import Provenance
 
+RECORD_SCHEMA_VERSION = "1.0.0"
+
 
 @dataclass
 class Result:
@@ -24,6 +26,8 @@ class Result:
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
+        d["schema_version"] = RECORD_SCHEMA_VERSION
+        d["record_type"] = "result"
         if self.confidence_interval is not None:
             d["confidence_interval"] = list(self.confidence_interval)
         if self.provenance is not None:
@@ -51,6 +55,8 @@ class BatchPlan:
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
+        d["schema_version"] = RECORD_SCHEMA_VERSION
+        d["record_type"] = "batch_plan"
         d["provenance"] = self.provenance.to_dict()
         return d
 
@@ -75,6 +81,8 @@ class AssayRun:
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
+        d["schema_version"] = RECORD_SCHEMA_VERSION
+        d["record_type"] = "assay_run"
         d["provenance"] = self.provenance.to_dict()
         d["results"] = [r.to_dict() if isinstance(r, Result) else r for r in self.results]
         return d

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from lnpilot.core.exceptions import ValidationError
 from lnpilot.core.validation import require_non_negative, require_positive
 
 
@@ -21,8 +22,7 @@ def scale_for_process(
     target = require_positive("target_rna_mass_ug", target_rna_mass_ug)
     rec = require_positive("expected_recovery", expected_recovery)
     if rec > 1.0:
-        # allow >1 only if user means measured yield factor — still require sensible
-        pass
+        raise ValidationError(f"expected_recovery must be <= 1, got {rec}")
     over = require_non_negative("overage_fraction", overage_fraction)
     planned = target / rec * (1.0 + over)
     return {

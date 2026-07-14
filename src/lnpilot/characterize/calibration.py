@@ -26,6 +26,10 @@ class LinearCalibration:
     y_standards: list[float] = field(default_factory=list)
     weighted: bool = False
     model: str = "linear"
+    lloq: float | None = None
+    uloq: float | None = None
+    residual_standard_error: float | None = None
+    standard_summary: list[dict[str, Any]] = field(default_factory=list)
 
     def predict_concentration(self, signal: float) -> float:
         if abs(self.slope) < 1e-15:
@@ -94,6 +98,13 @@ def fit_linear(
 
     r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 1.0
     residuals = (y - y_hat).tolist()
+    positive_levels = x[x > 0]
+    lloq = float(np.min(positive_levels)) if len(positive_levels) else None
+    uloq = float(np.max(x))
+    residual_df = len(x) - 2
+    residual_standard_error = (
+        float(np.sqrt(ss_res / residual_df)) if residual_df > 0 else None
+    )
 
     return LinearCalibration(
         slope=slope,
@@ -106,4 +117,7 @@ def fit_linear(
         x_standards=x.tolist(),
         y_standards=y.tolist(),
         weighted=w is not None,
+        lloq=lloq,
+        uloq=uloq,
+        residual_standard_error=residual_standard_error,
     )

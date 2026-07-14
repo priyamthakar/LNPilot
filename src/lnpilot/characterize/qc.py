@@ -28,12 +28,33 @@ def evaluate_ee_qc(ee_fraction: float | None) -> list[str]:
 
 
 def evaluate_range_qc(conc: float, cal: LinearCalibration) -> list[str]:
-    if not cal.in_range(conc):
+    lower = cal.lloq if cal.lloq is not None else cal.x_min
+    upper = cal.uloq if cal.uloq is not None else cal.x_max
+    if not lower <= conc <= upper:
         return [
-            f"Concentration {conc:g} outside calibration range "
-            f"[{cal.x_min:g}, {cal.x_max:g}]"
+            f"Concentration {conc:g} outside quantifiable range "
+            f"[{lower:g}, {upper:g}]"
         ]
     return []
+
+
+def coefficient_of_variation_percent(mean: float, sd: float | None) -> float | None:
+    if sd is None or abs(mean) < 1e-15:
+        return None
+    return 100.0 * abs(sd / mean)
+
+
+def evaluate_replicate_qc(
+    label: str,
+    mean: float,
+    sd: float | None,
+    *,
+    max_cv_percent: float,
+) -> tuple[float | None, list[str]]:
+    cv = coefficient_of_variation_percent(mean, sd)
+    if cv is not None and cv > max_cv_percent:
+        return cv, [f"{label} replicate CV={cv:.1f}% above {max_cv_percent:g}%"]
+    return cv, []
 
 
 def summarize_qc(flags: list[str]) -> dict[str, Any]:

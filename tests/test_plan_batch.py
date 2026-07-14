@@ -65,6 +65,26 @@ def test_negative_rna_rejected():
         )
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"expected_recovery": 1.01},
+        {"fill_volume": "-1 mL"},
+        {"n_vials": 1.5},
+    ],
+)
+def test_invalid_process_inputs_rejected(kwargs):
+    with pytest.raises(ValidationError):
+        plan_batch(
+            rna_mass="10 ug",
+            target_np=6,
+            lipid_composition=LIPIDS,
+            frr="3:1 aqueous:organic",
+            total_flow_rate="12 mL/min",
+            **kwargs,
+        )
+
+
 def test_example_config():
     cfg = json.loads(Path("examples/batch_example.json").read_text(encoding="utf-8"))
     plan = plan_batch(**cfg)

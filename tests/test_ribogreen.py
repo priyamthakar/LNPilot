@@ -1,6 +1,7 @@
 import pytest
 
 from lnpilot import analyze_ribogreen_plate
+from lnpilot.core.exceptions import ValidationError
 
 
 def test_example_plate():
@@ -18,6 +19,11 @@ def test_example_plate():
     assert 0 < s["ee_percent"] < 100
     # free < total
     assert s["free_rna_ug_per_mL"] < s["total_rna_ug_per_mL"]
+    assert s["free_cv_percent"] is not None
+    assert s["ee_confidence_interval_95"] is not None
+    assert d["calibration"]["lloq"] == pytest.approx(0.25)
+    assert len(d["calibration"]["standard_summary"]) == 6
+    assert d["provenance"]["source_files"][0]["sha256"]
 
 
 def test_synthetic_ee():
@@ -44,3 +50,52 @@ def test_synthetic_ee():
     assay = analyze_ribogreen_plate(data=data, plate_map=pmap)
     s = assay.sample_table[0]
     assert s["ee_percent"] == pytest.approx(75.0, rel=1e-3)
+
+
+def test_recovery_is_calculated_per_sample():
+    data = {
+        "A1": 100.0,
+        "B1": 100.0,
+        "B2": 1100.0,
+        "B3": 2100.0,
+        "B4": 4100.0,
+        "C1": 1100.0,
+        "C2": 4100.0,
+        "D1": 1100.0,
+        "D2": 2100.0,
+    }
+    pmap = [
+        {"well": "A1", "role": "blank"},
+        {"well": "B1", "role": "standard", "concentration": 0},
+        {"well": "B2", "role": "standard", "concentration": 1},
+        {"well": "B3", "role": "standard", "concentration": 2},
+        {"well": "B4", "role": "standard", "concentration": 4},
+        {"well": "C1", "role": "free", "group_id": "S1"},
+        {"well": "C2", "role": "total", "group_id": "S1"},
+        {"well": "D1", "role": "free", "group_id": "S2"},
+        {"well": "D2", "role": "total", "group_id": "S2"},
+    ]
+    assay = analyze_ribogreen_plate(
+        data=data,
+        plate_map=pmap,
+        input_rna_mass={"S1": "4 ug", "S2": "2 ug"},
+        sample_volume={"S1": "1 mL", "S2": "1 mL"},
+    )
+    assert [s["recovery_fraction"] for s in assay.sample_table] == pytest.approx([1.0, 1.0])
+
+    with pytest.raises(ValidationError, match="mapping keyed by sample"):
+        analyze_ribogreen_plate(
+            data=data,
+            plate_map=pmap,
+            input_rna_mass="4 ug",
+            sample_volume="1 mL",
+        )
+
+
+def test_recovery_requires_mass_and_volume_together():
+    with pytest.raises(ValidationError, match="provided together"):
+        analyze_ribogreen_plate(
+            data="examples/plate_reader_example.csv",
+            plate_map="examples/plate_map_example.csv",
+            input_rna_mass="2 ug",
+        )

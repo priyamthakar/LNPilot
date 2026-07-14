@@ -1,4 +1,4 @@
-# LNPilot v0.1 — Canonical equations
+# LNPilot v0.1.1 — Canonical equations
 
 ## Units (internal)
 
@@ -84,3 +84,16 @@ After blank correction and linear calibration invert, with dilution factors:
 \]
 
 only when signals are comparable, blanks/dilutions controlled, and responses in calibration range.
+For independent free and total replicate means, the approximate standard error is:
+
+```text
+SE(EE) = sqrt[(SE_free / total)^2 + (free * SE_total / total^2)^2]
+95% CI = EE +/- 1.96 * SE(EE)
+```
+
+This delta-method interval captures replicate variation only. It does not include calibration-model,
+pipetting, matrix, or dilution-factor uncertainty.
+
+Standard concentrations are converted to `ug/mL` before fitting. The lowest positive standard is
+reported as the operational LLOQ and the highest standard as the ULOQ. These bounds are calibration
+range checks, not a formal method-validation claim.

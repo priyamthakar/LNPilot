@@ -20,7 +20,7 @@ CANONICAL = {
     "molar_mass": "g/mol",
 }
 
-_ureg = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+_ureg: pint.UnitRegistry = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 try:
     _ureg.formatter.default_format = "~P"
 except Exception:  # older pint
