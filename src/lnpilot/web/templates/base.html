@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}LNPilot{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav class="topnav">
+    <div class="topnav-left">
+      <span class="topnav-brand">LNPilot</span>
+      <div class="topnav-links">
+        <a class="topnav-link {% if active_nav == 'home' %}active{% endif %}" href="/">Home</a>
+        <a class="topnav-link {% if active_nav == 'plan' %}active{% endif %}" href="/plan/new">Plan a batch</a>
+        <span class="topnav-link inert">RiboGreen QC</span>
+      </div>
+    </div>
+    <span class="topnav-version">v0.1.1</span>
+  </nav>
+  <main class="page-wide">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

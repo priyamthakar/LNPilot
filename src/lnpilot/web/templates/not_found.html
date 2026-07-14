@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Run not found — LNPilot{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 560px; margin-top: 48px;">
+  <h1 class="h2">Run not found</h1>
+  <p class="body-text">No plan result for run <span class="code-inline">{{ run_id }}</span>.
+    Results are held in memory and are cleared on server restart.</p>
+  <a class="btn btn-primary" href="/plan/new">Plan a batch</a>
+</div>
+{% endblock %}

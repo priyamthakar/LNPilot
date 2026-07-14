@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}LNPilot — mRNA–LNP batch planning{% endblock %}
+{% set active_nav = 'home' %}
+{% block content %}
+<div style="max-width: 720px; margin: 48px 0 0;">
+  <span class="honesty-chip" style="margin-bottom: 20px;">
+    Transparent, inspectable calculations · Not regulatory-grade
+  </span>
+  <h1 class="hero-title">Reproducible mRNA–LNP batch planning</h1>
+  <p class="body-text" style="margin-bottom: 32px;">
+    Plan an LNP formulation batch from RNA mass, N/P ratio, and lipid composition —
+    with every conversion, assumption, and warning shown in the open. LNPilot computes
+    stock volumes, mixing flow rates, and mass balance directly from
+    <span class="code-inline">lnpilot.formulate.plan_batch</span>.
+  </p>
+  <div style="display: flex; gap: 12px;">
+    <a class="btn btn-primary" href="/plan/new">Plan a batch</a>
+    <a class="btn btn-ghost" href="/plan/demo">Run demo</a>
+  </div>
+</div>
+{% endblock %}

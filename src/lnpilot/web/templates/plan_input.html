@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Plan a batch — LNPilot{% endblock %}
+{% set active_nav = 'plan' %}
+{% block content %}
+<div class="page" style="max-width: 760px;">
+  <h1 class="h2">Plan a batch</h1>
+  <p class="body-text" style="margin-bottom: 8px;">
+    Values feed directly into <span class="code-inline">plan_batch()</span> — nothing here is a static example.
+  </p>
+  <p style="margin-bottom: 24px;"><a class="btn-text" href="/plan/new?example=1" style="padding-left:0;">Load example values (examples/batch_example.json)</a></p>
+
+  {% if error_message %}
+  <div class="warning-banner" style="margin-bottom: 24px;">
+    <div class="dot"></div>
+    <div>
+      <div class="warning-title">Could not generate plan</div>
+      <div class="warning-body">{{ error_message }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" action="/plan/generate">
+    <div class="card" style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px;">
+
+      <div class="field">
+        <label class="field-label">Batch ID</label>
+        <input class="input" type="text" name="batch_id" value="{{ form.batch_id or 'batch-001' }}">
+      </div>
+
+      <div class="field">
+        <label class="field-label">RNA mass<span class="info-dot">i</span></label>
+        <div style="display:flex; gap:8px;">
+          <input class="input {% if error_message %}has-error{% endif %}" type="number" step="any"
+                 name="rna_mass_value" value="{{ form.rna_mass_value }}" style="max-width: 200px;">
+          <input type="hidden" name="rna_mass_unit" value="{{ form.rna_mass_unit }}">
+          <div class="unit-toggle">
+            <button type="button" data-toggle-group="rna_mass_unit" data-value="ug"
+                    class="{% if form.rna_mass_unit == 'ug' %}active{% endif %}">µg</button>
+            <button type="button" data-toggle-group="rna_mass_unit" data-value="mg"
+                    class="{% if form.rna_mass_unit == 'mg' %}active{% endif %}">mg</button>
+          </div>
+        </div>
+        <p class="field-hint">Target RNA mass in the finished product, before recovery/overage scale-up.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Target N/P ratio</label>
+        <input class="input" type="number" step="any" name="target_np" value="{{ form.target_np }}" style="max-width: 200px;">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Expected recovery (%)</label>
+        <input class="input" type="number" step="any" name="expected_recovery_percent"
+               value="{{ form.expected_recovery_percent }}" style="max-width: 200px;">
+        <p class="field-hint">Fraction of planned RNA expected to survive downstream processing.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Overage (%)</label>
+        <input class="input" type="number" step="any" name="overage_percent"
+               value="{{ form.overage_percent }}" style="max-width: 200px;">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Flow rate ratio (FRR)<span class="info-dot">i</span></label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input class="input" type="number" step="any" name="frr_aqueous_parts"
+                 value="{{ form.frr_aqueous_parts }}" style="max-width: 90px;">
+          <span class="small-text">:</span>
+          <input class="input" type="number" step="any" name="frr_organic_parts"
+                 value="{{ form.frr_organic_parts }}" style="max-width: 90px;">
+          <input type="hidden" name="frr_convention" value="{{ form.frr_convention }}">
+          <div class="pill-group">
+            <button type="button" data-toggle-group="frr_convention" data-value="aqueous:organic"
+                    class="pill {% if form.frr_convention == 'aqueous:organic' %}active{% endif %}">aqueous:organic</button>
+            <button type="button" data-toggle-group="frr_convention" data-value="organic:aqueous"
+                    class="pill {% if form.frr_convention == 'organic:aqueous' %}active{% endif %}">organic:aqueous</button>
+          </div>
+        </div>
+        <p class="field-hint">Convention is never inferred — pick the order explicitly.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Total flow rate (mL/min)</label>
+        <input class="input" type="number" step="any" name="total_flow_rate"
+               value="{{ form.total_flow_rate }}" style="max-width: 200px;">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <h2 class="h2" style="font-size: 16px; margin-bottom: 16px;">Lipid composition — Standard 4-component</h2>
+      <div class="table">
+        <div class="table-row table-head" style="grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;">
+          <div class="table-cell">Name</div>
+          <div class="table-cell">mol %</div>
+          <div class="table-cell">MW (g/mol)</div>
+          <div class="table-cell">Stock (mg/mL)</div>
+          <div class="table-cell">Ionizable groups</div>
+        </div>
+        {% for lip in form.lipids %}
+        <div class="table-row" style="grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;">
+          <div class="table-cell">
+            <input class="input" type="text" name="lipid_name_{{ loop.index0 }}" value="{{ lip.name }}">
+          </div>
+          <div class="table-cell">
+            <input class="input" type="number" step="any" name="lipid_mol_percent_{{ loop.index0 }}" value="{{ lip.mol_percent }}">
+          </div>
+          <div class="table-cell">
+            <input class="input" type="number" step="any" name="lipid_mw_{{ loop.index0 }}" value="{{ lip.mw }}">
+          </div>
+          <div class="table-cell">
+            <input class="input" type="number" step="any" name="lipid_stock_{{ loop.index0 }}" value="{{ lip.stock }}">
+          </div>
+          <div class="table-cell">
+            <input class="input" type="number" step="any" name="lipid_groups_{{ loop.index0 }}" value="{{ lip.ionizable_groups }}"
+                   {% if lip.role != 'ionizable' %}disabled{% endif %}>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="accordion-hint">mol% is normalized automatically; it does not need to sum to exactly 100.</p>
+    </div>
+
+    <div class="accordion" style="margin-bottom: 24px;">
+      <button type="button" class="accordion-head">
+        <span class="title">Advanced</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="accordion-body">
+        <div class="field">
+          <label class="field-label">Average nucleotide MW (g/mol)</label>
+          <input class="input" type="number" step="any" name="avg_nt_mw" value="{{ form.avg_nt_mw }}" style="max-width: 200px;">
+        </div>
+        <div class="field">
+          <label class="field-label">Fill volume (mL, optional)</label>
+          <input class="input" type="number" step="any" name="fill_volume" value="{{ form.fill_volume }}" style="max-width: 200px;">
+        </div>
+        <div class="field">
+          <label class="field-label">Number of vials (optional)</label>
+          <input class="input" type="number" step="1" name="n_vials" value="{{ form.n_vials }}" style="max-width: 200px;">
+        </div>
+        <div class="field">
+          <label class="field-label">Post-mix dilution factor</label>
+          <input class="input" type="number" step="any" name="post_mix_dilution_factor"
+                 value="{{ form.post_mix_dilution_factor }}" style="max-width: 200px;">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <button type="submit" class="btn btn-primary">Generate plan</button>
+      <a class="btn btn-ghost" href="/plan/demo">Run demo</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

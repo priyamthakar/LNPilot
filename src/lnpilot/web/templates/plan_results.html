@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Plan results — {{ plan.batch_id }} — LNPilot{% endblock %}
+{% set active_nav = 'plan' %}
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px;">
+  <h1 class="h2">{{ plan.batch_id }}</h1>
+  {% if plan.mass_balance.balanced %}
+  <span class="badge badge-ok"><span class="badge-dot"></span>Mass balance OK</span>
+  {% else %}
+  <span class="badge badge-fail"><span class="badge-dot"></span>Mass balance off</span>
+  {% endif %}
+</div>
+<p class="small-text" style="margin-bottom: 24px;">
+  Generated {{ plan.provenance.generated_at }} · {{ plan.provenance.software_name }} {{ plan.provenance.software_version }}
+</p>
+
+{% if plan.warnings %}
+<div class="warning-banner" style="margin-bottom: 24px;">
+  <div class="dot"></div>
+  <div>
+    <div class="warning-title">{{ plan.warnings|length }} warning{{ 's' if plan.warnings|length != 1 else '' }}</div>
+    {% for w in plan.warnings %}<div class="warning-body">{{ w }}</div>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="stat-grid" style="margin-bottom: 32px;">
+  <div class="stat-card">
+    <div class="stat-label">Achieved N/P</div>
+    <div class="stat-value">{{ "%.3g"|format(plan.theoretical.achieved_np) }}</div>
+    <div class="stat-sub">target {{ plan.target.target_np }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Planned RNA mass</div>
+    <div class="stat-value">{{ "%.4g"|format(plan.target.planned_rna_mass_ug) }} µg</div>
+    <div class="stat-sub">target {{ "%.4g"|format(plan.target.target_rna_mass_ug) }} µg</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total lipid mass</div>
+    <div class="stat-value">{{ "%.4g"|format(plan.mass_balance.total_lipid_mass_ug / 1000) }} mg</div>
+    <div class="stat-sub">{{ "%.4g"|format(plan.mass_balance.total_lipid_nmol) }} nmol total</div>
+  </div>
+  <div class="stat-card {% if not plan.theoretical.mixed_volume_mL %}stat-warning{% endif %}">
+    <div class="stat-label">Mixed volume</div>
+    {% if plan.theoretical.mixed_volume_mL %}
+    <div class="stat-value">{{ "%.4g"|format(plan.theoretical.mixed_volume_mL) }} mL</div>
+    <div class="stat-sub">aq {{ "%.3g"|format(plan.mixing.aqueous_flow_mL_per_min) }} / org {{ "%.3g"|format(plan.mixing.organic_flow_mL_per_min) }} mL/min</div>
+    {% else %}
+    <div class="stat-value">—</div>
+    <div class="stat-sub">unknown without complete stock volumes</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="tabs">
+  <button type="button" class="tab active" data-tab="worksheet">Worksheet</button>
+  <button type="button" class="tab" data-tab="trace">Calculation trace</button>
+  <button type="button" class="tab" data-tab="assumptions">Assumptions</button>
+  <button type="button" class="tab" data-tab="export">Export</button>
+</div>
+
+<div data-tab-panel="worksheet" class="tab-panel active">
+  <h2 class="h2" style="font-size:15px; margin-bottom:12px;">Lipids &amp; stock volumes</h2>
+  <div class="table" style="margin-bottom: 24px;">
+    <div class="table-row table-head" style="grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr 1fr;">
+      <div class="table-cell">Name</div>
+      <div class="table-cell">Role</div>
+      <div class="table-cell">mol % (norm)</div>
+      <div class="table-cell">Amount (nmol)</div>
+      <div class="table-cell">Mass (µg)</div>
+      <div class="table-cell">Stock volume (mL)</div>
+    </div>
+    {% for lip in plan.stocks %}
+    <div class="table-row" style="grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr 1fr;">
+      <div class="table-cell">{{ lip.name }}</div>
+      <div class="table-cell dim">{{ lip.role }}</div>
+      <div class="table-cell mono">{{ "%.3f"|format(lip.normalized_mol_percent) }}</div>
+      <div class="table-cell mono">{{ "%.4g"|format(lip.amount_nmol) }}</div>
+      <div class="table-cell mono">{{ "%.4g"|format(lip.mass_ug) }}</div>
+      <div class="table-cell mono">
+        {% if lip.stock_volume_mL is not none %}{{ "%.4g"|format(lip.stock_volume_mL) }}{% else %}—{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2 class="h2" style="font-size:15px; margin-bottom:12px;">Mixing</h2>
+  <div class="table">
+    <div class="table-row"><div class="table-cell dim">FRR (entered)</div><div class="table-cell mono">{{ plan.mixing.entered }}</div></div>
+    <div class="table-row"><div class="table-cell dim">Aqueous flow</div><div class="table-cell mono">{{ "%.4g"|format(plan.mixing.aqueous_flow_mL_per_min) }} mL/min</div></div>
+    <div class="table-row"><div class="table-cell dim">Organic flow</div><div class="table-cell mono">{{ "%.4g"|format(plan.mixing.organic_flow_mL_per_min) }} mL/min</div></div>
+    <div class="table-row"><div class="table-cell dim">Junction organic fraction</div><div class="table-cell mono">{{ "%.4g"|format(plan.mixing.junction_organic_volume_fraction) }}</div></div>
+    <div class="table-row"><div class="table-cell dim">Aqueous RNA concentration</div>
+      <div class="table-cell mono">{% if plan.aqueous.rna_concentration_ug_per_mL %}{{ "%.4g"|format(plan.aqueous.rna_concentration_ug_per_mL) }} µg/mL{% else %}—{% endif %}</div></div>
+  </div>
+</div>
+
+<div data-tab-panel="trace" class="tab-panel">
+  <div class="card" style="font-family: var(--font-mono); font-size: 13px; display:flex; flex-direction:column; gap:8px;">
+    {% for t in plan.calculation_trace %}
+    <div>{{ t }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div data-tab-panel="assumptions" class="tab-panel">
+  <div class="card">
+    <ul style="margin:0; padding-left: 18px;">
+      {% for a in plan.assumptions %}<li class="body-text">{{ a }}</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div data-tab-panel="export" class="tab-panel">
+  <div class="card" style="display:flex; gap:12px;">
+    <a class="btn btn-ghost" href="/plan/{{ run_id }}/export.json">Download JSON</a>
+    <a class="btn btn-ghost" href="/plan/{{ run_id }}/export.csv">Download lipids CSV</a>
+    <a class="btn btn-ghost" href="/plan/{{ run_id }}/export.md">Download Markdown report</a>
+  </div>
+</div>
+
+<p style="margin-top:32px;"><a class="btn-text" style="padding-left:0;" href="/plan/new">&larr; New plan</a></p>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}
