@@ -20,5 +20,14 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Lint
         run: ruff check src tests
+      - name: Type check
+        run: mypy
       - name: Test
-        run: pytest -q
+        run: pytest -q --cov=lnpilot --cov-report=term-missing --cov-fail-under=80
+      - name: Build distributions
+        run: python -m build
+      - name: Smoke-test wheel
+        shell: bash
+        run: |
+          python -m pip install --force-reinstall --no-deps dist/*.whl
+          python -c "import lnpilot; print(lnpilot.__version__)"

@@ -49,12 +49,16 @@ lnpilot analyze-ribogreen examples/plate_reader_example.csv --map examples/plate
 lnpilot render-report results/batch-plan.json
 ```
 
-## v0.1 scope
+## v0.1.1 scope
 
 | Workflow | Purpose |
 |----------|---------|
 | `plan_batch()` | N/P, lipid composition, stocks, FRR/TFR mixing, mass balance |
 | `analyze_ribogreen_plate()` | Plate map + calibration → free/total RNA, EE%, recovery |
+
+v0.1.1 adds canonical plate-map unit conversion, standard and sample replicate QC,
+EE uncertainty intervals, per-sample recovery, source-file SHA-256 hashes, and versioned
+JSON records. See [docs/backend-contract.md](docs/backend-contract.md) for UI integration.
 
 **Deferred:** IVT, construct/folding, DLS/pKa, stability, expression PK/PD, ML/GPU.
 
@@ -64,6 +68,8 @@ lnpilot render-report results/batch-plan.json
 - RNA phosphate uses a **mass-based average nucleotide MW** approximation unless stated otherwise.
 - Junction ethanol fraction is at the mixer, not after dilution/dialysis/TFF.
 - RiboGreen reports dye-accessible RNA; high EE% ≠ potency.
+- Standard concentrations are converted to canonical `ug/mL`; incompatible units fail.
+- Multi-sample recovery requires mass and volume mappings keyed by sample ID.
 
 See [docs/equations.md](docs/equations.md).
 
